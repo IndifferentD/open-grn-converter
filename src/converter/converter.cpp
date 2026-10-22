@@ -17,6 +17,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <utility>
 #include <vector>
 
 namespace grn {
@@ -128,6 +129,12 @@ bool convert_file(const std::filesystem::path& input,
         }
     }
 
+    if (!options.anim_file.empty() && dir != ConversionDirection::GrnToGlb) {
+        if (callback) callback(input.filename().string(), 0.0f, false,
+                               "--anim is only supported for GRN -> GLB conversion");
+        return false;
+    }
+
     std::filesystem::path out_path = output;
     if (out_path.empty()) {
         out_path = input;
@@ -141,6 +148,23 @@ bool convert_file(const std::filesystem::path& input,
         if (!model) {
             if (callback) callback(input.filename().string(), 0.0f, false, "Failed to parse GRN file");
             return false;
+        }
+
+        if (!options.anim_file.empty()) {
+            if (callback) callback(options.anim_file.filename().string(), 0.3f, true,
+                                   "Parsing external animation GRN: " + options.anim_file.string());
+            auto motion = parse_grn_file(options.anim_file);
+            if (!motion || motion->animations.empty()) {
+                if (callback) callback(options.anim_file.filename().string(), 0.0f, false,
+                                       "External animation GRN is invalid or has no animations");
+                return false;
+            }
+            const size_t count = motion->animations.size();
+            for (auto& animation : motion->animations) {
+                model->animations.push_back(std::move(animation));
+            }
+            if (callback) callback(options.anim_file.filename().string(), 0.4f, true,
+                                   "Merged " + std::to_string(count) + " external animation(s)");
         }
 
         resolve_model_textures(*model, input, options);

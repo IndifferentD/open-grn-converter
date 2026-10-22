@@ -172,5 +172,6 @@ endif()
 
 add_grn_test(test_writer tests/test_writer.cpp)
 add_grn_test(test_roundtrip tests/test_roundtrip.cpp)
+add_grn_test(test_animation_merge tests/test_animation_merge.cpp)
 add_grn_test(test_texture_hue tests/test_texture_hue.cpp)
 add_grn_test(test_viewer_compat tests/test_viewer_compat.cpp)
